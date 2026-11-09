@@ -7,6 +7,8 @@
 <meta name="description" content="B&B nel cuore dei Sassi di Matera. Prenota direttamente al miglior prezzo, senza commissioni.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/pannellum/2.5.6/pannellum.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pannellum/2.5.6/pannellum.js"></script>
 <style>
 :root{--stone:#efe7da;--stone-2:#e2d6c3;--ink:#2b241d;--muted:#6f6355;--accent:#a0522d;--accent-2:#7d3f22;--white:#fffdf9}
 *{box-sizing:border-box;margin:0;padding:0}
@@ -23,6 +25,7 @@ nav .wrap{display:flex;align-items:center;justify-content:space-between;height:6
 .links{display:flex;gap:24px;align-items:center;font-size:14px}
 .links a{text-decoration:none;color:var(--muted)}
 .links a:hover{color:var(--ink)}
+.links a.btn,.links a.btn:hover{color:#fff}
 .lang{border:1px solid var(--stone-2);background:none;border-radius:20px;padding:4px 10px;font-size:12px;cursor:pointer;color:var(--ink)}
 .btn{display:inline-block;background:var(--accent);color:#fff;text-decoration:none;padding:13px 26px;border-radius:40px;font-weight:600;font-size:15px;border:0;cursor:pointer;transition:background .2s}
 .btn:hover{background:var(--accent-2)}
@@ -62,6 +65,10 @@ form{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:30px}
 label{font-size:13px;color:var(--muted);display:block;margin-bottom:4px}
 input,select,textarea{width:100%;padding:12px 14px;border:1px solid var(--stone-2);border-radius:6px;font:inherit;background:var(--white);color:var(--ink)}
 .full{grid-column:1/-1}
+#vista{background:var(--stone)}
+#pano{width:100%;height:480px;border-radius:6px;overflow:hidden;margin-top:34px;background:#d9c8ae}
+.hint{margin-top:12px;font-size:13px;color:var(--muted)}
+.hint a{color:var(--muted)}
 .map{border:0;width:100%;height:360px;border-radius:6px;filter:sepia(.25)}
 footer{background:var(--stone);padding:40px 0;font-size:14px;color:var(--muted)}
 footer .wrap{display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap}
@@ -71,6 +78,7 @@ footer .wrap{display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap}
   .links a:not(.btn){display:none}
   .split,.grid3,form{grid-template-columns:1fr}
   section{padding:64px 0}
+  #pano{height:340px}
   .hero{min-height:78vh}
 }
 </style>
@@ -85,6 +93,7 @@ footer .wrap{display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap}
     <div class="links">
       <a href="#struttura" data-it="La dimora" data-en="The house"></a>
       <a href="#camere" data-it="Camere" data-en="Rooms"></a>
+      <a href="#vista" data-it="Vista 360°" data-en="360° view"></a>
       <a href="#dove" data-it="Dove siamo" data-en="Location"></a>
       <button class="lang" id="lang">EN</button>
       <a href="#prenota" class="btn" style="padding:9px 18px;font-size:14px" data-it="Prenota" data-en="Book"></a>
@@ -136,6 +145,16 @@ footer .wrap{display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap}
       <div class="card room"><div class="ph" data-it="La tua foto qui" data-en="Your photo here"></div><div class="body"><h3>Belvedere</h3><p data-it="Finestra sui Sassi, ideale per le coppie." data-en="Window over the Sassi, ideal for couples."></p><div class="price" data-it="da 110 € <small>/ notte</small>" data-en="from €110 <small>/ night</small>"></div></div></div>
       <div class="card room"><div class="ph" data-it="La tua foto qui" data-en="Your photo here"></div><div class="body"><h3>Famiglia</h3><p data-it="Fino a 4 ospiti, con angolo cottura." data-en="Up to 4 guests, with kitchenette."></p><div class="price" data-it="da 140 € <small>/ notte</small>" data-en="from €140 <small>/ night</small>"></div></div></div>
     </div>
+  </div>
+</section>
+
+<section id="vista">
+  <div class="wrap">
+    <div class="eyebrow" data-it="Tour a 360°" data-en="360° tour"></div>
+    <h2 data-it="Guardati intorno, prima di arrivare." data-en="Look around before you arrive."></h2>
+    <p class="lead" data-it="Trascina l'immagine con il dito o con il mouse per girarti a 360°. Qui vedrai la tua camera, la terrazza o la vista della tua struttura." data-en="Drag the image with your finger or mouse to turn around 360°. Here guests will see your room, terrace or view."></p>
+    <div id="pano"></div>
+    <p class="hint"><span data-it="Esempio: Piazza Vittorio Veneto, Matera" data-en="Example: Piazza Vittorio Veneto, Matera"></span> · Foto <a href="https://commons.wikimedia.org/wiki/File:Giro_a_360%C2%B0gradi.jpg" target="_blank" rel="noopener">Pandora1970</a>, <a href="https://creativecommons.org/licenses/by-sa/4.0/" target="_blank" rel="noopener">CC BY-SA 4.0</a></p>
   </div>
 </section>
 
@@ -219,6 +238,12 @@ document.getElementById("f").onsubmit = e => {
   window.open(`https://wa.me/${WHATSAPP}?text=${encodeURIComponent(msg)}`, "_blank");
 };
 apply();
+if (window.pannellum) pannellum.viewer("pano", {
+  type: "equirectangular", panorama: "img/vista360.jpg",
+  haov: 360, vaov: 89, vOffset: 0, minPitch: -44, maxPitch: 44,
+  autoLoad: true, autoRotate: -3, showControls: true, compass: false,
+  hfov: 90, minHfov: 50, maxHfov: 100
+});
 </script>
 </body>
 </html>

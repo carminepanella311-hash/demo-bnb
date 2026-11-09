@@ -8,6 +8,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/pannellum/2.5.6/pannellum.css">
+<link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css">
+<script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pannellum/2.5.6/pannellum.js"></script>
 <style>
 :root{--stone:#efe7da;--stone-2:#e2d6c3;--ink:#2b241d;--muted:#6f6355;--accent:#a0522d;--accent-2:#7d3f22;--white:#fffdf9}
@@ -66,7 +68,22 @@ label{font-size:13px;color:var(--muted);display:block;margin-bottom:4px}
 input,select,textarea{width:100%;padding:12px 14px;border:1px solid var(--stone-2);border-radius:6px;font:inherit;background:var(--white);color:var(--ink)}
 .full{grid-column:1/-1}
 #vista{background:var(--stone)}
-#pano{width:100%;height:480px;border-radius:6px;overflow:hidden;margin-top:34px;background:#d9c8ae}
+.stage{position:relative;height:520px;border-radius:6px;overflow:hidden;margin-top:34px;background:#2b241d}
+#map3d,#pano{position:absolute;inset:0}
+#pano{opacity:0;pointer-events:none;transition:opacity .6s}
+.stage.in #pano{opacity:1;pointer-events:auto}
+.stage.in #map3d{display:none}
+.pin{width:46px;height:46px;border-radius:50% 50% 50% 0;background:var(--accent);transform:rotate(-45deg);border:3px solid #fff;box-shadow:0 6px 18px rgba(0,0,0,.4);cursor:pointer;display:flex;align-items:center;justify-content:center;animation:bob 1.6s ease-in-out infinite}
+.pin span{transform:rotate(45deg);color:#fff;font:600 18px "Cormorant Garamond",serif}
+@keyframes bob{50%{margin-top:-8px}}
+.tag{position:absolute;left:16px;top:16px;z-index:3;background:rgba(255,253,249,.95);border-radius:6px;padding:12px 16px;max-width:280px;box-shadow:0 6px 20px rgba(0,0,0,.2);font-size:14px}
+.tag b{font-family:"Cormorant Garamond",serif;font-size:21px;display:block}
+.tag .btn{margin-top:10px;padding:9px 16px;font-size:13px}
+.stage .back{position:absolute;right:16px;top:16px;z-index:3;display:none;padding:9px 16px;font-size:13px}
+.stage.in .back{display:inline-block}
+.stage.in .tag{display:none}
+.replay{position:absolute;right:16px;bottom:30px;z-index:3;background:rgba(255,253,249,.95);border:0;border-radius:20px;padding:7px 14px;font-size:12px;cursor:pointer;color:var(--ink)}
+.stage.in .replay{display:none}
 .hint{margin-top:12px;font-size:13px;color:var(--muted)}
 .hint a{color:var(--muted)}
 .map{border:0;width:100%;height:360px;border-radius:6px;filter:sepia(.25)}
@@ -78,7 +95,8 @@ footer .wrap{display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap}
   .links a:not(.btn){display:none}
   .split,.grid3,form{grid-template-columns:1fr}
   section{padding:64px 0}
-  #pano{height:340px}
+  .stage{height:440px}
+  .tag{right:16px;max-width:none}
   .hero{min-height:78vh}
 }
 </style>
@@ -93,7 +111,7 @@ footer .wrap{display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap}
     <div class="links">
       <a href="#struttura" data-it="La dimora" data-en="The house"></a>
       <a href="#camere" data-it="Camere" data-en="Rooms"></a>
-      <a href="#vista" data-it="Vista 360°" data-en="360° view"></a>
+      <a href="#vista" data-it="Vista 3D" data-en="3D view"></a>
       <a href="#dove" data-it="Dove siamo" data-en="Location"></a>
       <button class="lang" id="lang">EN</button>
       <a href="#prenota" class="btn" style="padding:9px 18px;font-size:14px" data-it="Prenota" data-en="Book"></a>
@@ -150,11 +168,17 @@ footer .wrap{display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap}
 
 <section id="vista">
   <div class="wrap">
-    <div class="eyebrow" data-it="Tour a 360°" data-en="360° tour"></div>
-    <h2 data-it="Guardati intorno, prima di arrivare." data-en="Look around before you arrive."></h2>
-    <p class="lead" data-it="Trascina l'immagine con il dito o con il mouse per girarti a 360°. Qui vedrai la tua camera, la terrazza o la vista della tua struttura." data-en="Drag the image with your finger or mouse to turn around 360°. Here guests will see your room, terrace or view."></p>
-    <div id="pano"></div>
-    <p class="hint"><span data-it="Esempio: Piazza Vittorio Veneto, Matera" data-en="Example: Piazza Vittorio Veneto, Matera"></span> · Foto <a href="https://commons.wikimedia.org/wiki/File:Giro_a_360%C2%B0gradi.jpg" target="_blank" rel="noopener">Pandora1970</a>, <a href="https://creativecommons.org/licenses/by-sa/4.0/" target="_blank" rel="noopener">CC BY-SA 4.0</a></p>
+    <div class="eyebrow" data-it="Vista 3D e tour a 360°" data-en="3D view and 360° tour"></div>
+    <h2 data-it="Guarda dove dormirai, prima di arrivare." data-en="See where you'll stay before you arrive."></h2>
+    <p class="lead" data-it="Vola sopra Matera fino alla nostra porta, poi entra e guardati intorno a 360°." data-en="Fly over Matera right to our door, then step in and look around in 360°."></p>
+    <div class="stage" id="stage">
+      <div id="map3d"></div>
+      <div id="pano"></div>
+      <div class="tag" id="tag"><b>Pietra Viva</b><span data-it="Siamo qui, a due passi dal belvedere sui Sassi." data-en="We're right here, steps from the Sassi viewpoint."></span><br><button class="btn" id="enter" data-it="Entra nella vista 360° →" data-en="Step into the 360° view →"></button></div>
+      <button class="btn back" id="back" data-it="← Torna alla mappa" data-en="← Back to map"></button>
+      <button class="replay" id="replay" data-it="↻ Rivedi il volo" data-en="↻ Replay flight"></button>
+    </div>
+    <p class="hint"><span data-it="Esempio: struttura e foto dimostrative (Piazza Vittorio Veneto, Matera)" data-en="Example: demo property and photo (Piazza Vittorio Veneto, Matera)"></span> · 360°: <a href="https://commons.wikimedia.org/wiki/File:Giro_a_360%C2%B0gradi.jpg" target="_blank" rel="noopener">Pandora1970</a>, <a href="https://creativecommons.org/licenses/by-sa/4.0/" target="_blank" rel="noopener">CC BY-SA 4.0</a></p>
   </div>
 </section>
 
@@ -238,12 +262,51 @@ document.getElementById("f").onsubmit = e => {
   window.open(`https://wa.me/${WHATSAPP}?text=${encodeURIComponent(msg)}`, "_blank");
 };
 apply();
-if (window.pannellum) pannellum.viewer("pano", {
-  type: "equirectangular", panorama: "img/vista360.jpg",
-  haov: 360, vaov: 89, vOffset: 0, minPitch: -44, maxPitch: 44,
-  autoLoad: true, autoRotate: -3, showControls: true, compass: false,
-  hfov: 90, minHfov: 50, maxHfov: 100
-});
+// --- Vista 3D + 360° ---
+const STRUTTURA = [16.60632, 40.66665]; // lng, lat della struttura
+const ARRIVO = {zoom:16.4, pitch:57, bearing:95, padding:{top:160}}; // inquadratura finale: guarda verso i Sassi
+const stage = document.getElementById("stage");
+let viewer = null, flown = false, map = null;
+function fly(){
+  if (!map) return;
+  map.jumpTo({center:[16.598,40.664], zoom:12.3, pitch:0, bearing:0});
+  map.flyTo({center:STRUTTURA, ...ARRIVO, duration:7000, essential:true, curve:1.6});
+}
+if (window.maplibregl) {
+  map = new maplibregl.Map({
+    container:"map3d", center:[16.598,40.664], zoom:12.3, pitch:0, maxPitch:75,
+    attributionControl:{compact:true}, cooperativeGestures:true,
+    style:{version:8,
+      sources:{
+        sat:{type:"raster",tileSize:256,maxzoom:19,attribution:"Imagery © Esri, Maxar, Earthstar Geographics",
+          tiles:["https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"]},
+        dem:{type:"raster-dem",encoding:"terrarium",tileSize:256,maxzoom:15,attribution:"Terrain: Mapzen/AWS",
+          tiles:["https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png"]}
+      },
+      layers:[{id:"sat",type:"raster",source:"sat"}],
+      terrain:{source:"dem",exaggeration:1.6},
+      sky:{"sky-color":"#8fbbe3","horizon-color":"#f3ece2","fog-color":"#f3ece2","sky-horizon-blend":.7,"horizon-fog-blend":.6,"fog-ground-blend":.92}
+    }
+  });
+  map.addControl(new maplibregl.NavigationControl({visualizePitch:true}),"bottom-left");
+  const el = document.createElement("div"); el.className = "pin"; el.innerHTML = "<span>PV</span>";
+  el.onclick = () => enter();
+  new maplibregl.Marker({element:el, anchor:"bottom"}).setLngLat(STRUTTURA).addTo(map);
+  map.on("load", () => {
+    new IntersectionObserver((es, o) => { if (es[0].isIntersecting && !flown) { flown = true; fly(); o.disconnect(); } }, {threshold:.5}).observe(stage);
+  });
+}
+function enter(){
+  stage.classList.add("in");
+  if (!viewer && window.pannellum) viewer = pannellum.viewer("pano", {
+    type:"equirectangular", panorama:"img/vista360.jpg",
+    haov:360, vaov:89, vOffset:0, minPitch:-44, maxPitch:44,
+    autoLoad:true, autoRotate:-3, compass:false, hfov:90, minHfov:50, maxHfov:100
+  });
+}
+document.getElementById("enter").onclick = enter;
+document.getElementById("back").onclick = () => { stage.classList.remove("in"); map && map.resize(); };
+document.getElementById("replay").onclick = fly;
 </script>
 </body>
 </html>
